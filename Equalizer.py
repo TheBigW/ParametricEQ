@@ -1,3 +1,20 @@
+# MyEqualizer.py
+# Copyright (C) 2013 - Tobias Wenig
+#			tobiaswenig@yahoo.com>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>
+
 from gi.repository import Gtk, Gio, Gdk, GdkPixbuf, Gst
 from config import Config
 from EQBandParams import EQBandParams
@@ -60,9 +77,11 @@ class EQGroupControl(Gtk.VBox):
 #TODO: as per eq: derive from object; make dialog a member
 class EQControl(Gtk.Dialog):
     def __init__(self, eq, params):
-	super(EQControl,self).__init__()
+	super(Gtk.Dialog, self).__init__()	
+	self.set_deletable(False)	
 	self.eq = eq
 	self.params = params
+	self.connect( "delete-event", self.on_destroy )
 	self.set_title( "N Bands parametric EQ" )	
 	closeBtn = self.add_button(Gtk.STOCK_CLOSE,Gtk.ResponseType.CLOSE)
 	closeBtn.connect( "clicked", self.on_close )
@@ -79,6 +98,9 @@ class EQControl(Gtk.Dialog):
         self.vbox.add(applyBtn);
         for i in range(0,numEqBands):
             self.newHBox.add(EQGroupControl( self.params[i], self ))
+    def on_destroy(self, widget, data):
+	self.on_close(None)
+	return True
     def gain_changed(self):
 	self.updateParamList()
 	self.eq.apply_settings( self.params )
@@ -106,18 +128,11 @@ class EQControl(Gtk.Dialog):
 	self.newHBox.remove( eqbandCtrl )
 	self.eq.apply_settings()
     def on_close(self, shell):
+	print "closing ui"
 	self.set_visible(False)
+	return True
     def show_ui(self, shell, state):
+	print "showing UI"
         self.show_all()
         self.present()
-    def add_ui(self, plugin, shell):
-	action = Gtk.Action ('Equalize', 
-			_('_Equalizer'), 
-			_('N Band Equalizer'),
-			plugin.find_file("MyEqualizer.svg"))
-	action.connect ('activate', self.show_ui, shell)
-	action_group = Gtk.ActionGroup ('EqualizerActionGroup')
-	action_group.add_action (action)
-        ui_manager = shell.props.ui_manager
-        ui_manager.insert_action_group (action_group)
-        ui_manager.add_ui_from_file(plugin.find_file("equalizer-ui.xml"))
+	print "done showing UI"

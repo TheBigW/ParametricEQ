@@ -17,10 +17,8 @@
 
 import os, sys, inspect
 
-from gi.repository import GObject, Gst, Peas
-from gi.repository import RB
-from Equalizer import EQControl
-from Equalizer import EQBandParams
+from gi.repository import GObject, Gst, Peas, RB, Gtk
+from Equalizer import EQControl, EQBandParams
 from config import Config
 
 class MyEqualizerPlugin(GObject.Object, Peas.Activatable):
@@ -36,11 +34,23 @@ class MyEqualizerPlugin(GObject.Object, Peas.Activatable):
 		conf = Config()		
 		params = conf.load()#[EQBandParams(40.0,10.0,6.0)]		
 		self.eqDlg = EQControl(self, params)        	
-		self.eqDlg.add_ui( self, self.shell )
+		self.add_ui( self, self.shell )
 		#print inspect.getdoc( self.sp )
 		self.filterSet = False
 		self.apply_settings(params)
 		self.psc_id = self.shell_player.connect('playing-song-changed', self.playing_song_changed)
+	
+	def add_ui(self, plugin, shell):
+		action = Gtk.Action ('Equalize', 
+				_('_Equalizer'), 
+				_('N Band Equalizer'),
+				plugin.find_file("MyEqualizer.svg"))
+		action.connect ('activate', self.eqDlg.show_ui, shell)
+		action_group = Gtk.ActionGroup ('EqualizerActionGroup')
+		action_group.add_action (action)
+		ui_manager = shell.props.ui_manager
+		ui_manager.insert_action_group (action_group)
+		ui_manager.add_ui_from_file(plugin.find_file("equalizer-ui.xml"))
 	
 	def set_filter(self):
 		try:
