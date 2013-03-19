@@ -21,8 +21,6 @@ from gi.repository import GObject, Gst, Peas, RB, Gtk, Gdk, GdkPixbuf
 from Equalizer import EQControl, EQBandParams
 from config import Config
 
-MY_ICON_IMAGE = "MY_ITEM_IMAGE"
-
 class MyEqualizerPlugin(GObject.Object, Peas.Activatable):
 	object = GObject.property(type = GObject.Object)
 	def __init__(self):
@@ -47,13 +45,13 @@ class MyEqualizerPlugin(GObject.Object, Peas.Activatable):
 		print "svg: ", filename		
 		picBuff = GdkPixbuf.Pixbuf.new_from_file(filename)
 		#print inspect.getdoc( picBuff )
-		icon_factory.add( MY_ICON_IMAGE, Gtk.IconSet( picBuff ) )
+		icon_factory.add( "MyEqualizer.svg", Gtk.IconSet( picBuff ) )
 		icon_factory.add_default()
 
 		action = Gtk.Action ('Equalize', 
 				_('_MyEqualizer'), 
 				_('N Band Equalizer'),
-				MY_ICON_IMAGE)
+				filename)
 		action.connect ('activate', self.eqDlg.show_ui, shell)
 		action_group = Gtk.ActionGroup ('EqualizerActionGroup')
 		action_group.add_action (action)
