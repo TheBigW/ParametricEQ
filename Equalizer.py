@@ -123,7 +123,8 @@ class EQControl(Gtk.Dialog):
         if self.dlg.run() == Gtk.ResponseType.OK :
 		self.newHBox.add( EQGroupControl( self.dlg.params, self ) )
 	self.dlg.destroy()
-	self.eq.apply_settings()
+	self.updateParamList()
+	self.eq.apply_settings( self.params )
     def on_remove_band(self,eqbandCtrl):
 	self.newHBox.remove( eqbandCtrl )
 	self.eq.apply_settings()
