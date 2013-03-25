@@ -1,4 +1,4 @@
-# MyEqualizer.py
+# ParametricEQ.py
 # Copyright (C) 2013 - Tobias Wenig
 #			tobiaswenig@yahoo.com>
 #
@@ -23,10 +23,10 @@ from config import Config
 
 MY_ICON_IMAGE = "MY_ITEM_IMAGE"
 
-class MyEqualizerPlugin(GObject.Object, Peas.Activatable):
+class ParametricEQPlugin(GObject.Object, Peas.Activatable):
 	object = GObject.property(type = GObject.Object)
 	def __init__(self):
-		super(MyEqualizerPlugin, self).__init__()
+		super(ParametricEQPlugin, self).__init__()
 
 	def do_activate(self):
 		self.shell = self.object
@@ -43,7 +43,7 @@ class MyEqualizerPlugin(GObject.Object, Peas.Activatable):
 	
 	def add_ui(self, plugin, shell):
 		icon_factory = Gtk.IconFactory()
-		filename = plugin.find_file("MyEqualizer.svg")
+		filename = plugin.find_file("ParametricEQ.svg")
 		print "svg: ", filename		
 		picBuff = GdkPixbuf.Pixbuf.new_from_file(filename)
 		#print inspect.getdoc( picBuff )

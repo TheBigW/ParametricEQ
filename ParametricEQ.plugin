@@ -1,0 +1,9 @@
+[Plugin]
+Loader=python
+Module=ParametricEQ
+IAge=2
+Name=ParametricEQ
+Description=parametric equalizer with up to 64 Bands
+Authors=Tobias Wenig <TobiasWenig@yahoo.com>
+Copyright=Tobias Wenig 2013
+Website=
