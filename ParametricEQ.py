@@ -51,7 +51,7 @@ class ParametricEQPlugin(GObject.Object, Peas.Activatable):
 		icon_factory.add_default()
 
 		action = Gtk.Action ('Equalize', 
-				_('_MyEqualizer'), 
+				_('_ParametricEQ'), 
 				_('N Band Equalizer'),
 				MY_ICON_IMAGE)
 		action.connect ('activate', self.eqDlg.show_ui, shell)
@@ -118,7 +118,7 @@ class ParametricEQPlugin(GObject.Object, Peas.Activatable):
 				print 'band.props.bandwidth', band.props.bandwidth
 				band.props.gain = params[i].gain
 				print 'band.props.gain', band.props.gain
-				band.props.type = 0
+				band.props.type = params[i].bandType
 			result = True
 		if True == result:
 			self.set_filter()

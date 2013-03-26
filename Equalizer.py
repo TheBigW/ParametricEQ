@@ -18,6 +18,7 @@
 from gi.repository import Gtk, Gio, Gdk, GdkPixbuf, Gst
 from config import Config
 from EQBandParams import EQBandParams
+import os, sys, inspect
 
 class LabeledEdit:
     def __init__(self, box, text, value):
@@ -38,11 +39,20 @@ class AddDialog(Gtk.Dialog):
         self.bandWidthLE = LabeledEdit( box, "Bandwidth", "10" );
         self.freqLE = LabeledEdit( box, "frequency", "100" );
         self.gainLE = LabeledEdit( box, "Gain", "0" );
+	name_store = Gtk.ListStore(int, str)
+	name_store.append([ 0, EQBandParams.get_string_from_band_type(0)] )
+	name_store.append([ 1, EQBandParams.get_string_from_band_type(1)] )
+	name_store.append([ 2, EQBandParams.get_string_from_band_type(2)] )
+	self.comboType = Gtk.ComboBox.new_with_model_and_entry(name_store)
+	self.comboType.set_entry_text_column(1)
+	self.comboType.set_active(0)
+	box.add(self.comboType)        
         self.show_all()
     def on_ok(self, param):
 	self.params.gain = int(self.gainLE.entry.get_text())
 	self.params.frequency = int(self.freqLE.entry.get_text())
 	self.params.bandwidth = int(self.bandWidthLE.entry.get_text())
+	self.params.bandType = self.comboType.get_active()
         
 class EQGroupControl(Gtk.VBox):
     def __init__(self, params, parent):
@@ -59,10 +69,12 @@ class EQGroupControl(Gtk.VBox):
         slider.set_size_request( 100, 300 )
         slider.connect( "value_changed", self.slider_changed )
         labelFreq = Gtk.Label( "f=" + str(self.params.frequency) + "Hz" )
-        labelBw = Gtk.Label( "w=" + str(self.params.bandwidth) + "Hz" )
+        labelBw = Gtk.Label( "w=" + str(self.params.bandwidth) + "Hz" )	
+	labelType = Gtk.Label( EQBandParams.get_string_from_band_type(self.params.bandType) )
         self.add(slider)
         self.add(labelFreq);
         self.add(labelBw);
+	self.add(labelType)
         remBtn = Gtk.Button( "Remove" )
 	remBtn.connect( "clicked", self.on_remove_band )
         self.add( remBtn )
@@ -74,7 +86,7 @@ class EQGroupControl(Gtk.VBox):
 	self.parent.gain_changed()
     def on_remove_band(self, param):
 	self.parent.on_remove_band(self)
-#TODO: as per eq: derive from object; make dialog a member
+
 class EQControl(Gtk.Dialog):
     def __init__(self, eq, params):
 	super(Gtk.Dialog, self).__init__()	

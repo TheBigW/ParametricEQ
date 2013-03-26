@@ -39,6 +39,11 @@ class Config:
 			print "param.frequency : ", param.frequency			
 			param.gain = conf.get_float( currCfgKey + '/gain' )
 			print "param.gain : ", param.gain
+			eqType = conf.get_int( currCfgKey + '/type' )
+			if None == eqType:			
+				param.bandType = 0
+			else:
+				param.bandType = eqType
 			params.append( param )
 		print "num params : ", len(params)
 		return params
@@ -53,4 +58,4 @@ class Config:
 			conf.set_float( currCfgKey + '/bandWidth', params[i].bandwidth )
 			conf.set_float( currCfgKey + '/frequency', params[i].frequency )
 			conf.set_float( currCfgKey + '/gain', params[i].gain )
-
+			conf.set_int( currCfgKey + '/type', params[i].bandType )
