@@ -62,7 +62,6 @@ class EQGroupControl(Gtk.VBox):
         adjustment = Gtk.Adjustment(0, 0, 100, 5, 10, 0)
         slider = Gtk.VScale()
         slider.set_range( -24, 12 )
-        #slider.set_update_policy( Gtk.UpdatePolicy.DISCONTINUOUS )
         slider.set_inverted(True)
         slider.set_value_pos( Gtk.PositionType.TOP )
         slider.set_value(self.params.gain)
@@ -100,16 +99,26 @@ class EQControl(Gtk.Dialog):
         numEqBands = len(self.params)
 	print "numEqBands : ", numEqBands        
 	self.set_default_size( numEqBands * 100, 350)
-        self.newHBox = Gtk.HBox(False);
-        self.vbox.add(self.newHBox)
-        addBtn = Gtk.Button( "Add EQ band" )
-        addBtn.connect( "clicked", self.add_new_eq_band );
-	self.vbox.add(addBtn);
-	applyBtn = Gtk.Button( "Apply settings" )
-        applyBtn.connect( "clicked", self.on_apply_settings );
-        self.vbox.add(applyBtn);
-        for i in range(0,numEqBands):
+	buttonBox = Gtk.HBox(False)
+        addBtn = Gtk.Button( "Add band" )
+        addBtn.connect( "clicked", self.add_new_eq_band )
+	buttonBox.add(addBtn);
+	applyBtn = Gtk.Button( "Save" )
+        applyBtn.connect( "clicked", self.on_apply_settings )
+        buttonBox.add(applyBtn)
+	self.vbox.add(buttonBox)
+	self.newHBox = None
+        self.rebuild_eq_controls()        
+    def rebuild_eq_controls(self):
+	numEqBands = len(self.params)
+	if self.newHBox != None:	
+		self.vbox.remove(self.newHBox)	
+		self.newHBox.destroy()
+	self.newHBox = Gtk.HBox(False)
+	for i in range(0,numEqBands):
             self.newHBox.add(EQGroupControl( self.params[i], self ))
+	self.vbox.add(self.newHBox)
+	self.newHBox.show_all()
     def on_destroy(self, widget, data):
 	self.on_close(None)
 	return True
@@ -132,11 +141,13 @@ class EQControl(Gtk.Dialog):
 	print "num bands :", numBands
     def add_new_eq_band(self, param):
         self.dlg = AddDialog(self)
-        if self.dlg.run() == Gtk.ResponseType.OK :
-		self.newHBox.add( EQGroupControl( self.dlg.params, self ) )
+        if self.dlg.run() == Gtk.ResponseType.OK : 
+		self.updateParamList()
+		self.params.append( self.dlg.params )
+		self.params = sorted(self.params, key=lambda par: par[0])#ascending order for frequency
+		self.eq.apply_settings( self.params )
+		self.rebuild_eq_controls()
 	self.dlg.destroy()
-	self.updateParamList()
-	self.eq.apply_settings( self.params )
     def on_remove_band(self,eqbandCtrl):
 	self.newHBox.remove( eqbandCtrl )
 	self.eq.apply_settings()

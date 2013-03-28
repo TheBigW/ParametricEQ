@@ -25,4 +25,12 @@ class EQBandParams:
         self.bandwidth = width
         self.gain = gain
 	self.bandType = 0
-
+    def __getitem__(self, key):
+	if key == 0:
+		return self.frequency
+	elif key == 1:
+		return self.bandwidth
+	elif key == 2:
+		return self.gain
+	elif key == 3:
+		return self.bandType

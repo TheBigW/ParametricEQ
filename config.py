@@ -46,10 +46,12 @@ class Config:
 				param.bandType = eqType
 			params.append( param )
 		print "num params : ", len(params)
+		params = sorted(params, key=lambda par: par[0])#ascending order for frequency
 		return params
 	def save( self, params ):
+		params = sorted(params, key=lambda par: par[0])#ascending order for frequency
 		conf = GConf.Client.get_default()
-		numBands = len(params)		
+		numBands = len(params)
 		print "numbands : ", numBands
 		conf.set_int(EQUALIZER_GCONF_PREFIX + '/' + EQUALIZER_NUM_BANDS, numBands)
 		for i in range(0, numBands):			
