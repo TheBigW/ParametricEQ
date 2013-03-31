@@ -106,6 +106,9 @@ class EQControl(Gtk.Dialog):
 	applyBtn = Gtk.Button( "Save" )
         applyBtn.connect( "clicked", self.on_apply_settings )
         buttonBox.add(applyBtn)
+	#add a link button to the github for documentation
+	linkButton = Gtk.LinkButton("https://github.com/TheBigW/ParametricEQ/blob/master/README.md", label="HowTo")
+	buttonBox.add(linkButton) 
 	self.vbox.add(buttonBox)
 	self.newHBox = None
         self.rebuild_eq_controls()        
