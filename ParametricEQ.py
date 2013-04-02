@@ -34,8 +34,21 @@ class ParametricEQPlugin(GObject.Object, Peas.Activatable):
 		self.player = self.shell_player.props.player
 		self.eq = Gst.ElementFactory.make('equalizer-nbands', 'MyEQ')	
 		conf = Config()		
-		params = conf.load()
-		self.eqDlg = EQControl(self, params)        	
+		params = conf.load(None)
+		if len(params) == 0:
+			#no default config for active preset - create a 10 Band default EQ to get started
+			params =  [	EQBandParams(29, 20, 0),
+					EQBandParams(59, 30, 0),
+					EQBandParams(119, 60, 0),
+					EQBandParams(237, 118, 0),
+					EQBandParams(474, 237, 0),
+					EQBandParams(947, 473, 0),
+					EQBandParams(1889, 942, 0),
+					EQBandParams(3770, 1881, 0),
+					EQBandParams(7523, 3753, 0),
+					EQBandParams(15011, 7488, 0) ]
+			conf.save(params,"default_10_band")
+		self.eqDlg = EQControl(self)
 		self.add_ui( self, self.shell )
 		self.filterSet = False
 		self.apply_settings(params)
@@ -91,7 +104,9 @@ class ParametricEQPlugin(GObject.Object, Peas.Activatable):
 		if entry == None:
 			return
 		genre = entry.get_string(RB.RhythmDBPropType.GENRE)
-
+		print "genre : " + str(genre)
+		print entry.get_string(RB.RhythmDBPropType.ALBUM)
+		print entry.get_string(RB.RhythmDBPropType.TITLE)
 	def find_file(self, filename):
 		info = self.plugin_info
 		data_dir = info.get_data_dir()

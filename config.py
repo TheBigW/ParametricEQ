@@ -18,20 +18,55 @@
 from EQBandParams import EQBandParams
 from gi.repository import GConf
 
-EQUALIZER_GCONF_PREFIX = '/apps/rhythmbox/plugins/equalizer'
-EQUALIZER_NUM_BANDS = 'num_bands'
+EQUALIZER_GCONF_PREFIX = '/apps/rhythmbox/plugins/ParametricEQ'
 
 class Config:
-	def load(self):	
-		conf = GConf.Client.get_default() 		
+	def getAllPresets(self):
+		conf = GConf.Client.get_default()
+		baseCfgPath = EQUALIZER_GCONF_PREFIX
+		numPresets = conf.get_int( baseCfgPath + '/num_presets')
+		presets = []
+		for i in range(0, numPresets):
+			currCfgKey = baseCfgPath + '/preset' + str(i)
+			presets.append( conf.get_string(currCfgKey) )
+		return presets
+
+	def saveAllPresets(self, conf, presets):
+		conf = GConf.Client.get_default()
+		baseCfgPath = EQUALIZER_GCONF_PREFIX
+		numPresets = len(presets)
+		conf.set_int( baseCfgPath + '/num_presets', numPresets)
+		for i in range(0, numPresets):
+			currCfgKey = baseCfgPath + '/preset' + str(i)
+			conf.set_string(currCfgKey, presets[i] )
+		
+	def getCurrPreset(self):
+		conf = GConf.Client.get_default()
+		return conf.get_string( EQUALIZER_GCONF_PREFIX + '/current_preset' )
+
+	def setCurrPreset(self, conf, preset):
+		conf.set_string( EQUALIZER_GCONF_PREFIX + '/current_preset', preset )
+		#check if already in presets list - if not add
+		presets = self.getAllPresets()
+		if preset not in presets:
+			presets.append(preset)
+			self.saveAllPresets(conf, presets)
+	def load(self, preset):	
+		conf = GConf.Client.get_default()
+		if preset == None:
+			preset = self.getCurrPreset()	
 		params = []
-		numBands = conf.get_int(EQUALIZER_GCONF_PREFIX + '/' + EQUALIZER_NUM_BANDS)
+		if preset == None:
+			#no preset: probably no config -> leave
+			return params
+		baseCfgPath = EQUALIZER_GCONF_PREFIX + '/' + preset
+		numBands = conf.get_int( baseCfgPath + '/num_bands' )
 		if numBands == None:
 			numBands = 0
 		print "numbands : ", numBands
 		for i in range(0, numBands):
 			param = EQBandParams(0.0, 0.0, 0.0)
-			currCfgKey = EQUALIZER_GCONF_PREFIX + '/EQBand' + str(i)
+			currCfgKey = baseCfgPath + '/EQBand' + str(i)
 			print "reading config from :", currCfgKey
 			param.bandwidth = conf.get_float( currCfgKey + '/bandWidth' )
 			print "param.bandwidth : ", param.bandwidth
@@ -46,16 +81,18 @@ class Config:
 				param.bandType = eqType
 			params.append( param )
 		print "num params : ", len(params)
-		params = sorted(params, key=lambda par: par[0])#ascending order for frequency
+		params.sort()#ascending order for frequency
 		return params
-	def save( self, params ):
-		params = sorted(params, key=lambda par: par[0])#ascending order for frequency
+	def save( self, params, preset ):
+		params.sort()#ascending order for frequency
 		conf = GConf.Client.get_default()
+		self.setCurrPreset(conf, preset)
 		numBands = len(params)
 		print "numbands : ", numBands
-		conf.set_int(EQUALIZER_GCONF_PREFIX + '/' + EQUALIZER_NUM_BANDS, numBands)
+		baseCfgPath = EQUALIZER_GCONF_PREFIX + '/' + preset
+		conf.set_int( baseCfgPath + '/num_bands', numBands )
 		for i in range(0, numBands):			
-			currCfgKey = EQUALIZER_GCONF_PREFIX + '/EQBand' + str(i)
+			currCfgKey = baseCfgPath + '/EQBand' + str(i)
 			print "saving config to :", currCfgKey
 			conf.set_float( currCfgKey + '/bandWidth', params[i].bandwidth )
 			conf.set_float( currCfgKey + '/frequency', params[i].frequency )
