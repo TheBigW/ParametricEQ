@@ -227,7 +227,7 @@ class EQControl(Gtk.Dialog):
         print "closing ui"
         self.set_visible(False)
         return True
-    def show_ui(self, shell, state):
+    def show_ui(self, *args):
         print "showing UI"
         self.show_all()
         self.present()
