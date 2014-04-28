@@ -19,12 +19,12 @@ class EQBandParams:
     EQBANDTYPES = {'Peak' : 0, 'Low shelf' : 1, 'High shelf' : 2}
     @staticmethod
     def get_string_from_band_type( bandType ):
-	return EQBandParams.EQBANDTYPES.keys()[EQBandParams.EQBANDTYPES.values().index(bandType)]
+        return list(EQBandParams.EQBANDTYPES.keys())[bandType]
     def __init__(self, freq, width, gain, bandType = 0):
         self.frequency = freq
         self.bandwidth = width
         self.gain = gain
-	self.bandType = bandType
+        self.bandType = bandType
     def __lt__(self, other):
          return self.frequency < other.frequency
 	
