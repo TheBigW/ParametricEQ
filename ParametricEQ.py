@@ -17,35 +17,51 @@
 
 import os, sys, inspect
 from gi.repository import GObject, Gst, Peas
-#from gi.repository import RB
+from gi.repository import RB
 from Equalizer import EQControl, EQBandParams
 from config import Config
 
+import PEQ_rb3compat
+from PEQ_rb3compat import ActionGroup
+from PEQ_rb3compat import Action
+from PEQ_rb3compat import ApplicationShell
+
+ui_string="""
+<ui> 
+  <menubar name="MenuBar"> 
+    <menu name="ControlMenu" action="Control"> 
+      <placeholder name="PluginPlaceholder">
+        <menuitem name="Parametric Equalizer" action="Equalize"/>
+      </placeholder>
+    </menu>
+  </menubar>
+</ui>
+"""
+
 class ParametricEQPlugin (GObject.Object, Peas.Activatable):
-    __gtype_name__ = 'ParametricEQPlugin'
     object = GObject.property(type=GObject.Object)
 
     def __init__(self):
         super(ParametricEQPlugin, self).__init__()
-        print "init done"
+        print("init done")
 
     def set_filter(self):
         try:
             if self.filterSet:
                 return
-            print 'adding filter'
+            print('adding filter')
             self.player.add_filter(self.eq)
             self.filterSet = True
-            print 'done setting filter'
+            print('done setting filter')
         except Exception as inst:
-            print 'unexpected exception',  sys.exc_info()[0], type(inst), inst  
+            print('unexpected exception',  sys.exc_info()[0], type(inst), inst)  
             pass
 
     def do_deactivate(self):
-        print 'entering do_deactivate'
+        print('entering do_deactivate')
         try:        
             self.player.remove_filter(self.eq)
-            print 'filter disabled'    
+            print('filter disabled')    
         except:
             pass
                     
@@ -54,29 +70,43 @@ class ParametricEQPlugin (GObject.Object, Peas.Activatable):
         del self.eq
 
     def apply_settings(self,params):
-        return
         numEQBands = len( params )
         result = False
-        print "num-bands : ", numEQBands
+        print("num-bands : ", numEQBands)
         if numEQBands > 0:
-            print "got eq bands"
+            print("got eq bands")
             self.eq.set_property('num-bands', numEQBands)
             for i in range(0,numEQBands):
                 band = self.eq.get_child_by_index(i)
                 #print inspect.getdoc( band.props.freq )
                 band.props.freq = params[i].frequency
-                print 'band.props.freq', band.props.freq
+                print('band.props.freq', band.props.freq)
                 band.props.bandwidth = params[i].bandwidth
-                print 'band.props.bandwidth', band.props.bandwidth
+                print('band.props.bandwidth', band.props.bandwidth)
                 band.props.gain = params[i].gain
-                print 'band.props.gain', band.props.gain
+                print('band.props.gain', band.props.gain)
                 band.props.type = params[i].bandType
             result = True
         if True == result:
             self.set_filter()
 
+    def show_ui(self, *args):
+        self.eqDlg.show_ui(args)
+
+    def add_ui(self, shell):
+        print("starting add_ui")
+        action_group = ActionGroup(shell, 'ParametricEqualizerActionGroup')
+        action_group.add_action(func=self.show_ui,
+            action_name='Equalize', label=_('_Equalizer'),
+            action_type='app')
+        self._appshell = ApplicationShell(shell)
+        self._appshell.insert_action_group(action_group)
+        self._appshell.add_app_menuitems(ui_string, 'ParametricEqualizerActionGroup')
+        print("add_ui done")
+
     def do_activate(self):
         self.shell = self.object
+        print("is RB3 :" + str( PEQ_rb3compat.is_rb3() ) + ", " + str(PEQ_rb3compat.PYVER))      
         self.shell_player = self.shell.props.shell_player
         self.player = self.shell_player.props.player
         self.eq = Gst.ElementFactory.make('equalizer-nbands', 'MyEQ')
@@ -96,18 +126,7 @@ class ParametricEQPlugin (GObject.Object, Peas.Activatable):
             EQBandParams(15011, 7488, 0)]
             conf.save(params,"default_10_band")
         self.eqDlg = EQControl(self)
-        self.eqDlg.add_ui( self.shell )
+        self.add_ui( self.shell )
         self.filterSet = False
         self.apply_settings(params)
-        print "do_activate done"
-
-'''
-    def find_file(self, filename):
-        info = self.plugin_info
-        data_dir = info.get_data_dir()
-        path = os.path.join(data_dir, filename)
-        
-        if os.path.exists(path):
-            return path
-        return RB.file(filename)
-'''
+        print("do_activate done")
