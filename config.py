@@ -63,24 +63,24 @@ class Config:
 		numBands = conf.get_int( baseCfgPath + '/num_bands' )
 		if numBands == None:
 			numBands = 0
-		print "numbands : ", numBands
+		print("numbands : ", numBands)
 		for i in range(0, numBands):
 			param = EQBandParams(0.0, 0.0, 0.0)
 			currCfgKey = baseCfgPath + '/EQBand' + str(i)
-			print "reading config from :", currCfgKey
+			print("reading config from :", currCfgKey)
 			param.bandwidth = conf.get_float( currCfgKey + '/bandWidth' )
-			print "param.bandwidth : ", param.bandwidth
+			print("param.bandwidth : ", param.bandwidth)
 			param.frequency = conf.get_float( currCfgKey + '/frequency' )
-			print "param.frequency : ", param.frequency			
+			print("param.frequency : ", param.frequency)		
 			param.gain = conf.get_float( currCfgKey + '/gain' )
-			print "param.gain : ", param.gain
+			print("param.gain : ", param.gain)
 			eqType = conf.get_int( currCfgKey + '/type' )
 			if None == eqType:			
 				param.bandType = 0
 			else:
 				param.bandType = eqType
 			params.append( param )
-		print "num params : ", len(params)
+		print("num params : ", len(params))
 		params.sort()#ascending order for frequency
 		return params
 	def save( self, params, preset ):
@@ -88,12 +88,12 @@ class Config:
 		conf = GConf.Client.get_default()
 		self.setCurrPreset(conf, preset)
 		numBands = len(params)
-		print "numbands : ", numBands
+		print("numbands : ", numBands)
 		baseCfgPath = EQUALIZER_GCONF_PREFIX + '/' + preset
 		conf.set_int( baseCfgPath + '/num_bands', numBands )
 		for i in range(0, numBands):			
 			currCfgKey = baseCfgPath + '/EQBand' + str(i)
-			print "saving config to :", currCfgKey
+			print("saving config to :", currCfgKey)
 			conf.set_float( currCfgKey + '/bandWidth', params[i].bandwidth )
 			conf.set_float( currCfgKey + '/frequency', params[i].frequency )
 			conf.set_float( currCfgKey + '/gain', params[i].gain )
