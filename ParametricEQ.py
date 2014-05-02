@@ -21,10 +21,10 @@ from gi.repository import RB
 from Equalizer import EQControl, EQBandParams
 from config import Config
 
-import PEQ_rb3compat
-from PEQ_rb3compat import ActionGroup
-from PEQ_rb3compat import Action
-from PEQ_rb3compat import ApplicationShell
+import ParametricEQ_rb3compat
+from ParametricEQ_rb3compat import ActionGroup
+from ParametricEQ_rb3compat import Action
+from ParametricEQ_rb3compat import ApplicationShell
 
 ui_string="""
 <ui> 
@@ -106,7 +106,7 @@ class ParametricEQPlugin (GObject.Object, Peas.Activatable):
 
     def do_activate(self):
         self.shell = self.object
-        print("is RB3 :" + str( PEQ_rb3compat.is_rb3() ) + ", " + str(PEQ_rb3compat.PYVER))      
+        print("is RB3 :" + str( ParametricEQ_rb3compat.is_rb3() ) + ", " + str(ParametricEQ_rb3compat.PYVER))      
         self.shell_player = self.shell.props.shell_player
         self.player = self.shell_player.props.player
         self.eq = Gst.ElementFactory.make('equalizer-nbands', 'MyEQ')
