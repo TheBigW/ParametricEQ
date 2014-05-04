@@ -171,7 +171,7 @@ class EQControl(Gtk.Dialog):
             preset = name
         else:
             entry = self.comboPresets.get_child()
-        preset = entry.get_text()
+            preset = entry.get_text()
         #gconf does not allow spaces -> so we replace with _    
         preset = preset.replace( " ", "_" )
         print("curr preset: ", preset)
