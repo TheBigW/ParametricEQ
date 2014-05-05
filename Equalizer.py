@@ -93,6 +93,23 @@ class EQControl(Gtk.Dialog):
         print("numEqBands : ", numEqBands)
         self.set_default_size( numEqBands * 100, 350)
         self.rebuild_eq_controls()
+    def loadPresets(self):
+        presetStore = self.comboPresets.get_model()        
+        presetStore.clear()
+        cfg = Config()
+        presets = cfg.getAllPresets()    
+        num_presets = len(presets)
+        for i in range(0, num_presets):
+            presetStore.append([ i, presets[i] ] )
+            print("adding preset : ", presets[i])
+        self.comboPresets.set_entry_text_column(1)
+        currPreset = cfg.getCurrPreset()
+        currPresetIndex = 0
+        if num_presets > 0:
+            currPresetIndex = presets.index( currPreset )    
+        print("preset index : ", currPresetIndex)    
+        self.comboPresets.set_active(currPresetIndex)
+        self.update_from_preset( currPreset, cfg )
     def __init__(self, eq):
         super(Gtk.Dialog, self).__init__()
         self.set_deletable(False)    
@@ -109,21 +126,8 @@ class EQControl(Gtk.Dialog):
         applyBtn.connect( "clicked", self.on_apply_settings )
         buttonBox.add(applyBtn)
         #combo box for presets
-        presetStore = Gtk.ListStore(int, str)
-        cfg = Config()
-        presets = cfg.getAllPresets()    
-        num_presets = len(presets)
-        for i in range(0, num_presets):
-            presetStore.append([ i, presets[i] ] )
-            print("adding preset : ", presets[i])
-        self.comboPresets = Gtk.ComboBox.new_with_model_and_entry(presetStore)
-        self.comboPresets.set_entry_text_column(1)
-        currPreset = cfg.getCurrPreset()
-        currPresetIndex = 0
-        if num_presets > 0:
-            currPresetIndex = presets.index( currPreset )    
-        print("preset index : ", currPresetIndex)    
-        self.comboPresets.set_active(currPresetIndex)
+        self.newHBox = None        
+        self.comboPresets = Gtk.ComboBox.new_with_model_and_entry( Gtk.ListStore(int, str) )        
         self.comboPresets.connect( "changed", self.onPresetChanged )
         buttonBox.add( Gtk.Label( "preset : " ) )
         buttonBox.add(self.comboPresets)
@@ -131,8 +135,7 @@ class EQControl(Gtk.Dialog):
         linkButton = Gtk.LinkButton("https://github.com/TheBigW/ParametricEQ/blob/master/README.md", label="HowTo")
         buttonBox.add(linkButton) 
         self.vbox.add(buttonBox)
-        self.newHBox = None
-        self.update_from_preset( currPreset, cfg )
+        self.loadPresets()
     def onPresetChanged(self, comboPresets):
         tree_iter = comboPresets.get_active_iter()
         if tree_iter != None:
@@ -175,7 +178,8 @@ class EQControl(Gtk.Dialog):
         #gconf does not allow spaces -> so we replace with _    
         preset = preset.replace( " ", "_" )
         print("curr preset: ", preset)
-        cfg.save( self.params, preset )
+        cfg.save( self.params, preset )  
+        self.loadPresets()
     def updateParamList(self):
         self.params = []
         eqBandctrls = self.newHBox.get_children()
