@@ -61,10 +61,11 @@ class ParametricEQPlugin (GObject.Object, Peas.Activatable):
         print('entering do_deactivate')
         try:        
             self.player.remove_filter(self.eq)
-            print('filter disabled')    
+            print('filter disabled')
+            shell = self.object
+            self._appshell.cleanup()    
         except:
-            pass
-                    
+            pass        
         del self.shell_player
         del self.shell
         del self.eq
@@ -78,7 +79,6 @@ class ParametricEQPlugin (GObject.Object, Peas.Activatable):
             self.eq.set_property('num-bands', numEQBands)
             for i in range(0,numEQBands):
                 band = self.eq.get_child_by_index(i)
-                #print inspect.getdoc( band.props.freq )
                 band.props.freq = params[i].frequency
                 print('band.props.freq', band.props.freq)
                 band.props.bandwidth = params[i].bandwidth
@@ -86,6 +86,8 @@ class ParametricEQPlugin (GObject.Object, Peas.Activatable):
                 band.props.gain = params[i].gain
                 print('band.props.gain', band.props.gain)
                 band.props.type = params[i].bandType
+                print( inspect.getdoc( band.props.type ) )
+                print( "band.props.type", params[i].bandType )
             result = True
         if True == result:
             self.set_filter()

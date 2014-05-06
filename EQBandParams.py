@@ -16,10 +16,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>
 
 class EQBandParams:
-    EQBANDTYPES = {'Peak' : 0, 'Low shelf' : 1, 'High shelf' : 2}
+    EQBANDTYPES = ['Peak', 'Low shelf', 'High shelf']
     @staticmethod
     def get_string_from_band_type( bandType ):
-        return list(EQBandParams.EQBANDTYPES.keys())[bandType]
+        print( EQBandParams.EQBANDTYPES )        
+        return EQBandParams.EQBANDTYPES[bandType]
     def __init__(self, freq, width, gain, bandType = 0):
         self.frequency = freq
         self.bandwidth = width
