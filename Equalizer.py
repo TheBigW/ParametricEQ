@@ -17,7 +17,7 @@
 
 from gi.repository import Gtk
 from config import Config
-from EQBandParams import EQBandParams
+from EQBandParams import EQBandParams, Preset, LoudnesParams
 #import os, sys, inspect
 
 class LabeledEdit:
@@ -27,13 +27,13 @@ class LabeledEdit:
         self.entry = Gtk.Entry()
         self.entry.set_text( value )
         box.add( self.entry )
-        
+
 class AddDialog(Gtk.Dialog):
     params = EQBandParams(0,0,0)
     def __init__(self, parent):
         super(Gtk.Dialog, self).__init__()
         okBtn = self.add_button(Gtk.STOCK_OK,Gtk.ResponseType.OK)
-        okBtn.connect( "clicked", self.on_ok )    
+        okBtn.connect( "clicked", self.on_ok )
         self.set_default_size(150, 100)
         box = self.get_content_area()
         self.bandWidthLE = LabeledEdit( box, "Bandwidth", "10" );
@@ -46,7 +46,7 @@ class AddDialog(Gtk.Dialog):
         self.comboType = Gtk.ComboBox.new_with_model_and_entry(name_store)
         self.comboType.set_entry_text_column(1)
         self.comboType.set_active(0)
-        box.add(self.comboType)        
+        box.add(self.comboType)
         self.show_all()
     def on_ok(self, param):
         self.params.gain = int(self.gainLE.entry.get_text())
@@ -54,9 +54,40 @@ class AddDialog(Gtk.Dialog):
         self.params.bandwidth = int(self.bandWidthLE.entry.get_text())
         self.params.bandType = self.comboType.get_active()
 
+class LoudnessDialog(Gtk.Dialog):
+    params = LoudnesParams()
+    def __init__(self, parent):
+        super(Gtk.Dialog, self).__init__()
+        okBtn = self.add_button(Gtk.STOCK_OK,Gtk.ResponseType.OK)
+        okBtn.connect( "clicked", self.on_ok )
+        self.set_default_size(150, 100)
+        box = self.get_content_area()
+        loudnesParams = Config.LoadLoudnesParams()
+        self.bandWidthLE = LabeledEdit( box, "Bandwidth", str(int(loudnesParams.eqBand.bandwidth)) )
+        self.freqLE = LabeledEdit( box, "frequency", str(int(loudnesParams.eqBand.frequency)) )
+        self.maxGainLE = LabeledEdit( box, "max gain", str(loudnesParams.maxGain) )
+        self.minVolumePercentageLE = LabeledEdit( box, "max dB volume percentage", str(loudnesParams.minVolumePercentage) );
+        self.maxVolumePercentageLE = LabeledEdit( box, "0dB volume percentage", str(loudnesParams.maxVolumePercentage) );
+        name_store = Gtk.ListStore(int, str)
+        name_store.append([ 0, EQBandParams.get_string_from_band_type(0)] )
+        name_store.append([ 1, EQBandParams.get_string_from_band_type(1)] )
+        name_store.append([ 2, EQBandParams.get_string_from_band_type(2)] )
+        self.comboType = Gtk.ComboBox.new_with_model_and_entry(name_store)
+        self.comboType.set_entry_text_column(1)
+        self.comboType.set_active(loudnesParams.eqBand.bandType)
+        box.add(self.comboType)
+        self.show_all()
+    def on_ok(self, param):
+        self.params.maxGain = float(self.maxGainLE.entry.get_text())
+        self.params.eqBand.frequency = float(self.freqLE.entry.get_text())
+        self.params.eqBand.bandwidth = float(self.bandWidthLE.entry.get_text())
+        self.params.eqBand.bandType = self.comboType.get_active()
+        self.params.minVolumePercentage = float(self.minVolumePercentageLE.entry.get_text() )
+        self.params.maxVolumePercentage = float(self.maxVolumePercentageLE.entry.get_text() )
+
 class EQGroupControl(Gtk.VBox):
     def __init__(self, params, parent):
-        super(Gtk.VBox, self).__init__(False)       
+        super(Gtk.VBox, self).__init__(False)
         self.params = EQBandParams( params.frequency, params.bandwidth, params.gain, params.bandType )
         self.parent = parent
         adjustment = Gtk.Adjustment(0, 0, 100, 5, 10, 0)
@@ -68,7 +99,7 @@ class EQGroupControl(Gtk.VBox):
         slider.set_size_request( 100, 300 )
         slider.connect( "value_changed", self.slider_changed )
         labelFreq = Gtk.Label( "f=" + str(self.params.frequency) + "Hz" )
-        labelBw = Gtk.Label( "w=" + str(self.params.bandwidth) + "Hz" )    
+        labelBw = Gtk.Label( "w=" + str(self.params.bandwidth) + "Hz" )
         labelType = Gtk.Label( EQBandParams.get_string_from_band_type(self.params.bandType) )
         self.add(slider)
         self.add(labelFreq);
@@ -76,7 +107,7 @@ class EQGroupControl(Gtk.VBox):
         self.add(labelType)
         remBtn = Gtk.Button( "Remove" )
         remBtn.connect( "clicked", self.on_remove_band )
-        self.add( remBtn )
+        self.add(remBtn)
         self.show_all()
     def slider_changed(self, hscale):
         print("hscale : ", hscale)
@@ -87,35 +118,32 @@ class EQGroupControl(Gtk.VBox):
         self.parent.on_remove_band(self)
 
 class EQControl(Gtk.Dialog):
-    def update_from_preset(self,preset, cfg):
-        self.params = cfg.load(preset)
-        numEqBands = len(self.params)
+    def update_from_preset(self, preset):
+        numEqBands = preset.getNumBands()
         print("numEqBands : ", numEqBands)
         self.set_default_size( numEqBands * 100, 350)
-        self.rebuild_eq_controls()
+        self.rebuild_eq_controls(preset.bandParams)
     def loadPresets(self):
-        presetStore = self.comboPresets.get_model()        
+        presetStore = self.comboPresets.get_model()
         presetStore.clear()
-        cfg = Config()
-        presets = cfg.getAllPresets()    
-        num_presets = len(presets)
+        loadedPresets = Config.load()
+        num_presets = loadedPresets.getNumPresets()
         for i in range(0, num_presets):
-            presetStore.append([ i, presets[i] ] )
-            print("adding preset : ", presets[i])
+            currPreset = loadedPresets[i]
+            presetStore.append([ i, currPreset.presetName ] )
+            print("adding preset : ", currPreset.presetName, currPreset )
         self.comboPresets.set_entry_text_column(1)
-        currPreset = cfg.getCurrPreset()
-        currPresetIndex = 0
-        if num_presets > 0:
-            currPresetIndex = presets.index( currPreset )    
-        print("preset index : ", currPresetIndex)    
+        currPresetIndex = loadedPresets.activePresetIndex
+        print("preset index : ", currPresetIndex)
         self.comboPresets.set_active(currPresetIndex)
-        self.update_from_preset( currPreset, cfg )
+        self.update_from_preset( loadedPresets.getActivePreset() )
     def __init__(self, eq):
         super(Gtk.Dialog, self).__init__()
-        self.set_deletable(False)    
+        self.volume = 1.0
+        self.set_deletable(False)
         self.eq = eq
         self.connect( "delete-event", self.on_destroy )
-        self.set_title( "N Bands parametric EQ" )    
+        self.set_title( "N Bands parametric EQ" )
         closeBtn = self.add_button(Gtk.STOCK_CLOSE,Gtk.ResponseType.CLOSE)
         closeBtn.connect( "clicked", self.on_close )
         buttonBox = Gtk.HBox(False)
@@ -125,15 +153,18 @@ class EQControl(Gtk.Dialog):
         applyBtn = Gtk.Button( "Save" )
         applyBtn.connect( "clicked", self.on_apply_settings )
         buttonBox.add(applyBtn)
+        loudnessButton=Gtk.Button( "Loudness" )
+        loudnessButton.connect( "clicked", self.on_config_loudness )
+        buttonBox.add(loudnessButton)
         #combo box for presets
-        self.newHBox = None        
-        self.comboPresets = Gtk.ComboBox.new_with_model_and_entry( Gtk.ListStore(int, str) )        
+        self.newHBox = None
+        self.comboPresets = Gtk.ComboBox.new_with_model_and_entry( Gtk.ListStore(int, str) )
         self.comboPresets.connect( "changed", self.onPresetChanged )
         buttonBox.add( Gtk.Label( "preset : " ) )
         buttonBox.add(self.comboPresets)
         #add a link button to the github for documentation
         linkButton = Gtk.LinkButton("https://github.com/TheBigW/ParametricEQ/blob/master/README.md", label="HowTo")
-        buttonBox.add(linkButton) 
+        buttonBox.add(linkButton)
         self.vbox.add(buttonBox)
         self.loadPresets()
     def onPresetChanged(self, comboPresets):
@@ -142,74 +173,92 @@ class EQControl(Gtk.Dialog):
             model = comboPresets.get_model()
             row_id, preset = model[tree_iter][:2]
             print("Selected: id=%d, preset=%s" % (row_id, preset))
-            cfg = Config()
-            self.update_from_preset(preset, cfg)
-    def rebuild_eq_controls(self):
-        numEqBands = len(self.params)
-        if self.newHBox != None:    
-            self.vbox.remove(self.newHBox)    
+            presets = Config.load()
+            presets.activePresetIndex = row_id
+            Config.save(presets)
+            self.update_from_preset(presets.getActivePreset())
+    def rebuild_eq_controls(self, params):
+        numEqBands = len(params)
+        if self.newHBox != None:
+            self.vbox.remove(self.newHBox)
             self.newHBox.destroy()
         self.newHBox = Gtk.HBox(False)
         for i in range(0,numEqBands):
-            self.newHBox.add(EQGroupControl( self.params[i], self ))
+            self.newHBox.add(EQGroupControl( params[i], self ))
         self.vbox.add(self.newHBox)
         self.newHBox.show_all()
-        self.eq.apply_settings(self.params)
+        self.eq.apply_settings(params)
+    def onVolumeChanged(self,volume):
+        self.volume = volume
+        self.gain_changed()
     def on_destroy(self, widget, data):
         self.on_close(None)
         return True
     def gain_changed(self):
-        self.updateParamList()
-        self.eq.apply_settings( self.params )
+        params = self.getEqParamListFromUI()
+        self.eq.apply_settings( params )
     def on_apply_settings(self, some_param):
-        self.updateParamList()
-        self.eq.apply_settings( self.params )
-        print("num params to save : ", len(self.params))
-        cfg = Config()
+        params = self.getEqParamListFromUI(True)
+        self.eq.apply_settings( params )
+        print("num params to save : ", len(params))
         tree_iter = self.comboPresets.get_active_iter()
-        preset = ""        
+        presetName = ""
         if tree_iter != None:
             model = self.comboPresets.get_model()
             row_id, name = model[tree_iter][:2]
-            preset = name
+            presetName=name
         else:
             entry = self.comboPresets.get_child()
-            preset = entry.get_text()
-        #gconf does not allow spaces -> so we replace with _    
-        preset = preset.replace( " ", "_" )
-        print("curr preset: ", preset)
-        cfg.save( self.params, preset )  
+            presetName=entry.get_text()
+        print("curr preset: ",presetName)
+        allPresets = Config.load()
+        allPresets.appendPreset( Preset(presetName, params), True )
+        Config.save( allPresets )
         self.loadPresets()
-    def updateParamList(self):
-        self.params = []
+    def getEqParamListFromUI(self, ignoreLoudness = False):
+        params = []
         eqBandctrls = self.newHBox.get_children()
         print("children : ", len(eqBandctrls))
         numBands = len(eqBandctrls)
         for i in range(0,numBands):
-            self.params.append( eqBandctrls[i].params )
-        print("num bands :", numBands)
+            params.append( eqBandctrls[i].params )
+        loudnesParams = Config.LoadLoudnesParams()
+        if True == loudnesParams.loudnessEnabled() and not ignoreLoudness :
+            print("applying loudness")
+            #add the loudness EQ channel and calculate gain first
+            params.append( loudnesParams.getEQBand(self.volume) )
+        print("num bands :", len(params) )
+        return params
+    def on_config_loudness(self, param):
+        dlg = LoudnessDialog(self)
+        if dlg.run() == Gtk.ResponseType.OK :
+            #save params
+            Config.SaveLoudnesParams(dlg.params)
+            self.onVolumeChanged(self.volume)
+        dlg.destroy()
     def add_new_eq_band(self, param):
-        self.dlg = AddDialog(self)
-        if self.dlg.run() == Gtk.ResponseType.OK : 
-            self.updateParamList()        
-            self.params.append( self.dlg.params )
-            numBands = len(self.params)        
+        dlg = AddDialog(self)
+        if dlg.run() == Gtk.ResponseType.OK :
+            params=self.getEqParamListFromUI(True)
+            params.append( dlg.params )
+            numBands = len(params)
             for i in range(0,numBands):
-                print("before sort : Param %f, %f" % (self.params[i].frequency, self.params[i].bandwidth))        
-            self.params.sort()#ascending order for frequency
+                print("before sort : Param %f, %f" % (params[i].frequency, params[i].bandwidth))
+            params.sort()#ascending order for frequency
             for i in range(0,numBands):
-                print("Param %f, %f" % (self.params[i].frequency, self.params[i].bandwidth))
-            self.rebuild_eq_controls()
-        self.dlg.destroy()
+                print("Param %f, %f" % (params[i].frequency, params[i].bandwidth))
+            self.rebuild_eq_controls(params)
+        dlg.destroy()
     def on_remove_band(self,eqbandCtrl):
-        numParams = len(self.params)
+        params=self.getEqParamListFromUI(True)
+        numParams = len(params)
         param = None
         for i in range(0,numParams):
-            if eqbandCtrl.params.frequency == self.params[i].frequency:
-                param = self.params[i]
-                break    
-        self.params.remove(param)
-        self.rebuild_eq_controls()
+            if eqbandCtrl.params.frequency == params[i].frequency:
+                param = params[i]
+                break
+        params.remove(param)
+        self.rebuild_eq_controls(params)
     def on_close(self, shell):
         print("closing ui")
         self.set_visible(False)
