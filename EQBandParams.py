@@ -21,13 +21,36 @@ class EQBandParams:
     def get_string_from_band_type( bandType ):
         print( EQBandParams.EQBANDTYPES )
         return EQBandParams.EQBANDTYPES[bandType]
-    def __init__(self, freq, width, gain, bandType = 0):
+    def __init__(self, freq, width, gain, bandType = 0, loudnesEnabled=False, maxGain = 0, maxVolumePercentage = 0, minVolumePercentage = 0 ):
         self.frequency = freq
         self.bandwidth = width
         self.gain = gain
         self.bandType = bandType
+        self.loudnesEnabled = loudnesEnabled
+        self.maxGain = maxGain
+        self.maxVolumePercentage = maxVolumePercentage
+        self.minVolumePercentage = minVolumePercentage
     def __lt__(self, other):
          return self.frequency < other.frequency
+    def getEQBand(self, volume):
+        #calculate eqBand gain for loudnes
+        if self.loudnesEnabled == True:
+            print("self.maxVolumePercentage ", self.maxVolumePercentage)
+            print("self.minVolumePercentage ", self.minVolumePercentage)
+            minVolFact = (float(self.minVolumePercentage)/100)
+            maxVolFact = (float(self.maxVolumePercentage)/100)
+            calculatedGainFactor = (1.0 / (maxVolFact - minVolFact) ) * (volume-minVolFact)
+            print("calculatedGainFactor : ", calculatedGainFactor)
+            calculatedGain = (self.maxGain - (calculatedGainFactor * self.maxGain))
+            self.gain = max( min( calculatedGain, 12.0), 0 )
+            #print("loudnessGain:",self.gain)
+        return self
+    def loudnessEnabled(self):
+        return self.loudnesEnabled
+    loudnesEnabled = False
+    maxGain = 0.0
+    maxVolumePercentage = 1.0
+    minVolumePercentage = 0.0
 
 class Preset:
     def __init__(self, name, params):
@@ -40,31 +63,11 @@ class Preset:
     presetName = ""
     bandParams = []
 
-class LoudnesParams:
-    def getEQBand(self, volume):
-        #calculate eqBand gain
-        print("self.maxVolumePercentage ", self.maxVolumePercentage)
-        print("self.minVolumePercentage ", self.minVolumePercentage)
-        minVolFact = (float(self.minVolumePercentage)/100)
-        maxVolFact = (float(self.maxVolumePercentage)/100)
-        calculatedGainFactor = (1.0 / (maxVolFact - minVolFact) ) * (volume-minVolFact)
-        print("calculatedGainFactor : ", calculatedGainFactor)
-        calculatedGain = (self.maxGain - (calculatedGainFactor * self.maxGain))
-        self.eqBand.gain = max( min( calculatedGain, 12.0), 0 )
-        print("loudnessGain:",self.eqBand.gain)
-        return self.eqBand
-    def loudnessEnabled(self):
-        return self.maxGain != 0
-    eqBand = EQBandParams(0,0,0)
-    maxGain = 0.0
-    maxVolumePercentage = 1.0
-    minVolumePercentage = 0.0
 
 class Presets:
     def __init__(self):
         self.presets = []
         self.activePresetIndex = -1
-        self.loudnesParams=LoudnesParams()
     def appendPreset(self, preset, makeAtive):
         self.presets.append( preset )
         if True == makeAtive:
@@ -79,4 +82,3 @@ class Presets:
         return self.presets[index]
     activePresetIndex = -1
     presets = []
-    loudnesParams=LoudnesParams()

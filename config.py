@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>
 
-from EQBandParams import EQBandParams, Presets, Preset, LoudnesParams
+from EQBandParams import EQBandParams, Presets, Preset
 from gi.repository import GConf
 
 EQUALIZER_GCONF_PREFIX = '/apps/rhythmbox/plugins/ParametricEQ'
@@ -39,6 +39,11 @@ class Config:
             param.gain = conf.get_float( currCfgKey + '/gain' )
             eqType = conf.get_int( currCfgKey + '/type' )
             param.bandType = eqType
+            param.maxGain = conf.get_float( currCfgKey + '/loudnesMaxGain' )
+            param.maxVolumePercentage = conf.get_float( currCfgKey + '/maxVolumePercentage' )
+            param.minVolumePercentage = conf.get_float( currCfgKey + '/minVolumePercentage' )
+            param.loudnesEnabled = conf.get_bool(currCfgKey + '/loudnesEnabled')
+
             params.append( param )
         params.sort()#ascending order for frequency
         return Preset(preset, params)
@@ -55,30 +60,11 @@ class Config:
             conf.set_float( currCfgKey + '/frequency', params.bandParams[i].frequency )
             conf.set_float( currCfgKey + '/gain', params.bandParams[i].gain )
             conf.set_int( currCfgKey + '/type', params.bandParams[i].bandType )
+            conf.set_float( currCfgKey + '/loudnesMaxGain', params.bandParams[i].maxGain )
+            conf.set_float( currCfgKey + '/maxVolumePercentage', params.bandParams[i].maxVolumePercentage)
+            conf.set_float( currCfgKey + '/minVolumePercentage', params.bandParams[i].minVolumePercentage)
+            conf.set_bool( currCfgKey + '/loudnesEnabled', params.bandParams[i].loudnesEnabled)
 
-    staticmethod
-    def LoadLoudnesParams():
-        conf = GConf.Client.get_default()
-        loudnesParams = LoudnesParams()
-        currCfgKey = EQUALIZER_GCONF_PREFIX
-        loudnesParams.eqBand.bandwidth = conf.get_float( currCfgKey + '/loudnesBandWidth' )
-        loudnesParams.eqBand.frequency= conf.get_float( currCfgKey + '/loudnesFrequency' )
-        loudnesParams.maxGain = conf.get_float( currCfgKey + '/loudnesMaxGain' )
-        loudnesParams.maxVolumePercentage = conf.get_float( currCfgKey + '/maxVolumePercentage' )
-        loudnesParams.minVolumePercentage = conf.get_float( currCfgKey + '/minVolumePercentage' )
-        loudnesParams.eqBand.bandType = conf.get_int( currCfgKey + '/loudnesEQType' )
-        return loudnesParams
-
-    @staticmethod
-    def SaveLoudnesParams(loudnesParams):
-        conf = GConf.Client.get_default()
-        currCfgKey = EQUALIZER_GCONF_PREFIX
-        conf.set_float( currCfgKey + '/loudnesBandWidth', loudnesParams.eqBand.bandwidth )
-        conf.set_float( currCfgKey + '/loudnesFrequency', loudnesParams.eqBand.frequency )
-        conf.set_float( currCfgKey + '/loudnesMaxGain', loudnesParams.maxGain )
-        conf.set_float( currCfgKey + '/maxVolumePercentage', loudnesParams.maxVolumePercentage)
-        conf.set_float( currCfgKey + '/minVolumePercentage', loudnesParams.minVolumePercentage)
-        conf.set_int( currCfgKey + '/loudnesEQType', loudnesParams.eqBand.bandType )
     @staticmethod
     def load():
         conf = GConf.Client.get_default()
@@ -94,7 +80,6 @@ class Config:
             presets.appendPreset( newPreset, isActivePreset )
             print("loop index : ", i)
         print( "numPresets after loop: ", presets.getNumPresets() )
-        presets.loudnesParams = Config.LoadLoudnesParams()
         return presets
 
     @staticmethod
