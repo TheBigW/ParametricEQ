@@ -104,12 +104,12 @@ class ParametricEQPlugin (GObject.Object, Peas.Activatable):
     def volume_changed(self, sp, entry):
         print("volume changed")
         rbVolume = self.player.get_volume()
-        mainVolume = float(self.alsaVolumePercentage) / 100.0
+        mainVolume = float(self.mainVolumePercentage) / 100.0
         overallVolume = mainVolume * rbVolume
         self.eqDlg.onVolumeChanged( overallVolume )
         print( "volume:", overallVolume)
 
-    alsaVolumePercentage = 0
+    mainVolumePercentage = 0
 
     @staticmethod
     def alsaVolumeCheckTimer( paramEQPluginInst ):
@@ -120,10 +120,29 @@ class ParametricEQPlugin (GObject.Object, Peas.Activatable):
         out, err = p.communicate()
         pattern = re.compile('(\d*)%', re.MULTILINE)
         alsaVolume = int(pattern.findall( str(out) )[0])
-        if paramEQPluginInst.alsaVolumePercentage != alsaVolume:
-            paramEQPluginInst.alsaVolumePercentage = alsaVolume
+        if paramEQPluginInst.mainVolumePercentage  != alsaVolume:
+            paramEQPluginInst.mainVolumePercentage = alsaVolume
             print("main volume changed : ", alsaVolume)
             paramEQPluginInst.volume_changed(None, None)
+
+    @staticmethod
+    def pulseVolumeCheckTimer( paramEQPluginInst ):
+        threading.Timer(2.0, ParametricEQPlugin.pulseVolumeCheckTimer, [paramEQPluginInst]).start()
+        #alsa get volume:
+        #mainVolume = check_output(strParams )
+        p = subprocess.Popen(["pactl", "list", "sinks"], stdout=subprocess.PIPE)
+        out, err = p.communicate()
+        pattern = re.compile('Volume: 0:\s*(\d*)%', re.MULTILINE)
+        strOutPut = str(out)
+        #print( "pactl says: ", strOutPut )
+        allVolumes = pattern.findall( strOutPut )
+        print("all volumes : ", allVolumes)
+        pulseVolume = int(allVolumes[1])
+        if paramEQPluginInst.mainVolumePercentage != pulseVolume:
+            paramEQPluginInst.mainVolumePercentage  = pulseVolume
+            print("main volume changed : ", pulseVolume)
+            paramEQPluginInst.volume_changed(None, None)
+
 
     def do_activate(self):
         self.shell = self.object
@@ -156,5 +175,5 @@ class ParametricEQPlugin (GObject.Object, Peas.Activatable):
         self.apply_settings(currPresets.getActivePreset().bandParams )
         #add volume changed callback
         self.psc_id = self.player.connect('volume-changed', self.volume_changed)
-        ParametricEQPlugin.alsaVolumeCheckTimer(self)
+        ParametricEQPlugin.pulseVolumeCheckTimer(self)
         print("do_activate done")
