@@ -19,7 +19,7 @@ import os, sys, inspect
 from gi.repository import GObject, Gst, Peas
 from gi.repository import RB
 from Equalizer import EQControl, EQBandParams
-from config import Config
+from ParametricEQconfig import Config
 
 import ParametricEQ_rb3compat
 from ParametricEQ_rb3compat import ActionGroup
