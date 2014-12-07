@@ -81,7 +81,7 @@ class ParametricEQPlugin (GObject.Object, Peas.Activatable):
                 #print('band.props.freq', band.props.freq)
                 band.props.bandwidth = params[i].bandwidth
                 #print('band.props.bandwidth', band.props.bandwidth)
-                band.props.gain = params[i].gain
+                band.props.gain = params[i].appliedGain
                 #print('band.props.gain', band.props.gain)
                 band.props.type = params[i].bandType
                 #print( inspect.getdoc( band.props.type ) )
@@ -136,7 +136,7 @@ class ParametricEQPlugin (GObject.Object, Peas.Activatable):
         strOutPut = str(out)
         #print( "pactl says: ", strOutPut )
         allVolumes = pattern.findall( strOutPut )
-        print("all volumes : ", allVolumes)
+        #print("all volumes : ", allVolumes)
         pulseVolume = int(allVolumes[1])
         if paramEQPluginInst.mainVolumePercentage != pulseVolume:
             paramEQPluginInst.mainVolumePercentage  = pulseVolume
