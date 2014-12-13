@@ -82,6 +82,8 @@ class Presets:
                 break
         if None == foundPreset:
             self.presets.append( preset )
+        else:
+            self.presets[currPresetIndex] = preset
         if True == makeAtive:
             self.activePresetIndex=currPresetIndex
             print("activePresetIndex : ", self.activePresetIndex)

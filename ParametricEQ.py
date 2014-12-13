@@ -172,8 +172,9 @@ class ParametricEQPlugin (GObject.Object, Peas.Activatable):
         self.eqDlg = EQControl(self)
         self.add_ui( self.shell )
         self.filterSet = False
-        self.apply_settings(currPresets.getActivePreset().bandParams )
         #add volume changed callback
         self.psc_id = self.player.connect('volume-changed', self.volume_changed)
         ParametricEQPlugin.pulseVolumeCheckTimer(self)
+        #TODO: check for Pulse/Alsa somehow...
+        #ParametricEQPlugin.alsaVolumeCheckTimer(self)
         print("do_activate done")

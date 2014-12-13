@@ -42,8 +42,8 @@ class AddDialog(Gtk.Dialog):
         self.freqLE = LabeledEdit( box, "frequency", str(self.params.frequency) );
         self.gainLE = LabeledEdit( box, "Gain", str(self.params.gain) );
         self.maxGainLE = LabeledEdit( box, "loudnes max gain", str(self.params.maxGain) )
-        self.minVolumePercentageLE = LabeledEdit( box, "max dB volume percentage", str(self.params.maxVolumePercentage) )
-        self.maxVolumePercentageLE = LabeledEdit( box, "0dB volume percentage", str(self.params.minVolumePercentage ) )
+        self.minVolumePercentageLE = LabeledEdit( box, "max dB volume percentage", str(self.params.minVolumePercentage) )
+        self.maxVolumePercentageLE = LabeledEdit( box, "0dB volume percentage", str(self.params.maxVolumePercentage) )
         name_store = Gtk.ListStore(int, str)
         name_store.append([ 0, EQBandParams.get_string_from_band_type(0)] )
         name_store.append([ 1, EQBandParams.get_string_from_band_type(1)] )
@@ -98,13 +98,16 @@ class EQGroupControl(Gtk.VBox):
     def updateControlsFromParams(self):
         self.slider.set_value(self.params.appliedGain)
         self.loudnessCheckBox.set_active( self.params.loudnesEnabled )
-        #TODO: edit ;abel freq and BW too
+        self.labelFreq.set_text("f=" + str(self.params.frequency) + "Hz")
+        self.labelBw.set_text("w=" + str(self.params.bandwidth) + "Hz")
+        self.labelType.set_text(EQBandParams.get_string_from_band_type(self.params.bandType))
     def on_edit_settings(self, param):
         dlg = AddDialog(self, self.params)
         if dlg.run() == Gtk.ResponseType.OK:
             self.params = dlg.params
             self.parent.gain_changed()
             self.updateControlsFromParams()
+            self.parent.gain_changed()
         dlg.destroy()
     def onLoudnesSelectionChanged(self, param):
         self.params.loudnesEnabled = param.get_active()
@@ -164,6 +167,7 @@ class EQControl(Gtk.Dialog):
         buttonBox.add(linkButton)
         self.vbox.add(buttonBox)
         self.loadPresets()
+        self.gain_changed()
     def onPresetChanged(self, comboPresets):
         tree_iter = comboPresets.get_active_iter()
         if tree_iter != None:
@@ -184,7 +188,7 @@ class EQControl(Gtk.Dialog):
             self.newHBox.add(EQGroupControl( params[i], self ))
         self.vbox.add(self.newHBox)
         self.newHBox.show_all()
-        self.eq.apply_settings(params)
+        self.gain_changed()
     def onVolumeChanged(self,volume):
         self.volume = volume
         self.gain_changed()
