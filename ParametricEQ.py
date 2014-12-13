@@ -132,7 +132,7 @@ class ParametricEQPlugin (GObject.Object, Peas.Activatable):
         #mainVolume = check_output(strParams )
         p = subprocess.Popen(["pactl", "list", "sinks"], stdout=subprocess.PIPE)
         out, err = p.communicate()
-        pattern = re.compile('Volume: 0:\s*(\d*)%', re.MULTILINE)
+        pattern = re.compile(': 0:\s*(\d*)%', re.MULTILINE)
         strOutPut = str(out)
         #print( "pactl says: ", strOutPut )
         allVolumes = pattern.findall( strOutPut )
