@@ -176,8 +176,8 @@ class EQControl(Gtk.Dialog):
             print("Selected: id=%d, preset=%s" % (row_id, preset))
             presets = Config.load()
             presets.activePresetIndex = row_id
-            Config.save(presets)
             self.update_from_preset(presets.getActivePreset())
+            self.gain_changed()
     def rebuild_eq_controls(self, params):
         numEqBands = len(params)
         if self.newHBox != None:

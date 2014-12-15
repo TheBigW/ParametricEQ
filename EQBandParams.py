@@ -49,8 +49,9 @@ class EQBandParams:
         return EQBandParams(self.frequency, self.bandwidth, self.gain, self.bandType, self.loudnesEnabled, self.maxGain, self.maxVolumePercentage, self.minVolumePercentage)
     def loudnessEnabled(self):
         return self.loudnesEnabled
+    gain=0.0
     loudnesEnabled = False
-    appliedGain = -1.0
+    appliedGain = -0.0
     maxGain = 0.0
     maxVolumePercentage = 1.0
     minVolumePercentage = 0.0
@@ -66,7 +67,6 @@ class Preset:
     presetName = ""
     bandParams = []
 
-
 class Presets:
     def __init__(self):
         self.presets = []
@@ -74,18 +74,20 @@ class Presets:
     def appendPreset(self, preset, makeAtive):
         #check whether preset with given name already exists
         foundPreset = None
-        currPresetIndex = 0
+        foundIndex = 0
         for currPresetIndex in range(0, self.getNumPresets() ):
             currPreset = self.presets[currPresetIndex]
             if currPreset.presetName==preset.presetName:
                 foundPreset = preset
+                foundIndex = currPresetIndex
                 break
         if None == foundPreset:
             self.presets.append( preset )
+            foundIndex = self.getNumPresets() - 1
         else:
             self.presets[currPresetIndex] = preset
         if True == makeAtive:
-            self.activePresetIndex=currPresetIndex
+            self.activePresetIndex=foundIndex
             print("activePresetIndex : ", self.activePresetIndex)
         print("number of presets : ", self.getNumPresets() )
     def getActivePreset(self) :

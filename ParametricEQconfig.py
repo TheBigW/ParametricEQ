@@ -77,6 +77,7 @@ class Config:
             currPreset = conf.get_string( EQUALIZER_GCONF_PREFIX + '/preset' + str(i) )
             newPreset = Config.loadPreset( currPreset )
             isActivePreset = currPreset == actPreset
+            print( currPreset, " is active : ", isActivePreset )
             presets.appendPreset( newPreset, isActivePreset )
             print("loop index : ", i)
         print( "numPresets after loop: ", presets.getNumPresets() )
