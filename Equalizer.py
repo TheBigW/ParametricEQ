@@ -18,15 +18,21 @@
 from gi.repository import Gtk
 from config import Config
 from EQBandParams import EQBandParams, Preset
-#import os, sys, inspect
+import os, sys, inspect
 
 class LabeledEdit:
-    def __init__(self, box, text, value):
+    def __init__(self, box, text, value, strDescription = None):
         label = Gtk.Label( text )
         box.add(label)
         self.entry = Gtk.Entry()
+        if strDescription != None:
+            self.entry.set_tooltip_text( strDescription )
+            label.set_tooltip_text( strDescription )
         self.entry.set_text( value )
         box.add( self.entry )
+        newToolTip = Gtk.Tooltip()
+        print( inspect.getdoc(newToolTip) )
+        #newToolTip.set_tip(self.entry, "some tooltip")
 
 class AddDialog(Gtk.Dialog):
     params = EQBandParams(100,10,0)
@@ -38,12 +44,12 @@ class AddDialog(Gtk.Dialog):
         okBtn.connect( "clicked", self.on_ok )
         self.set_default_size(150, 100)
         box = self.get_content_area()
-        self.bandWidthLE = LabeledEdit( box, "Bandwidth", str(self.params.bandwidth) );
-        self.freqLE = LabeledEdit( box, "frequency", str(self.params.frequency) );
-        self.gainLE = LabeledEdit( box, "Gain", str(self.params.gain) );
-        self.maxGainLE = LabeledEdit( box, "loudnes max gain", str(self.params.maxGain) )
-        self.minVolumePercentageLE = LabeledEdit( box, "max dB volume percentage", str(self.params.minVolumePercentage) )
-        self.maxVolumePercentageLE = LabeledEdit( box, "0dB volume percentage", str(self.params.maxVolumePercentage) )
+        self.bandWidthLE = LabeledEdit( box, "Bandwidth", str(self.params.bandwidth), "Bandwith of the EQBand" )
+        self.freqLE = LabeledEdit( box, "frequency", str(self.params.frequency), "Frequency of the EQBand" )
+        self.gainLE = LabeledEdit( box, "Gain", str(self.params.gain), "Gain of the EQBand" )
+        self.maxGainLE = LabeledEdit( box, "loudnes max gain", str(self.params.maxGain), "Maximum gain used when reaching 'max dB volume percentage'" )
+        self.minVolumePercentageLE = LabeledEdit( box, "max dB volume percentage", str(self.params.minVolumePercentage), "percentage at which the maximum Gain is used" )
+        self.maxVolumePercentageLE = LabeledEdit( box, "0dB volume percentage", str(self.params.maxVolumePercentage), "volume percentage at which loudness gain is reduced to 0" )
         name_store = Gtk.ListStore(int, str)
         name_store.append([ 0, EQBandParams.get_string_from_band_type(0)] )
         name_store.append([ 1, EQBandParams.get_string_from_band_type(1)] )
@@ -86,8 +92,8 @@ class EQGroupControl(Gtk.VBox):
         editParamsButton = Gtk.Button( "Edit" )
         editParamsButton.connect( "clicked", self.on_edit_settings )
         self.add(self.slider)
-        self.add(self.labelFreq);
-        self.add(self.labelBw);
+        self.add(self.labelFreq)
+        self.add(self.labelBw)
         self.add(self.labelType)
         self.add(self.loudnessCheckBox)
         self.add(editParamsButton)
@@ -114,7 +120,7 @@ class EQGroupControl(Gtk.VBox):
     def slider_changed(self, hscale):
         #print("hscale : ", hscale)
         if not self.params.loudnesEnabled:
-            self.params.gain = hscale.get_value();
+            self.params.gain = hscale.get_value()
             print('slider changed for ' + str(self.params.frequency) + ' Hz to ' + str(self.params.gain))
             self.parent.gain_changed()
     def on_remove_band(self, param):
@@ -152,7 +158,7 @@ class EQControl(Gtk.Dialog):
         buttonBox = Gtk.HBox(False)
         addBtn = Gtk.Button( "Add band" )
         addBtn.connect( "clicked", self.add_new_eq_band )
-        buttonBox.add(addBtn);
+        buttonBox.add(addBtn)
         applyBtn = Gtk.Button( "Save" )
         applyBtn.connect( "clicked", self.on_apply_settings )
         buttonBox.add(applyBtn)
