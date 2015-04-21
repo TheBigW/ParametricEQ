@@ -238,7 +238,7 @@ class EQControl(Gtk.Dialog):
             numBands = len(params)
             #for i in range(0,numBands):
             #    print("before sort : Param %f, %f" % (params[i].frequency, params[i].bandwidth))
-            #params.sort()#ascending order for frequency
+            params.sort()#ascending order for frequency
             #for i in range(0,numBands):
             #    print("Param %f, %f" % (params[i].frequency, params[i].bandwidth))
             self.rebuild_eq_controls(params)
