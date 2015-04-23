@@ -40,6 +40,49 @@ ui_string="""
 </ui>
 """
 
+class PullVolumeThread(threading.Thread):
+    def __init__(self, event, eqInst ):
+        threading.Thread.__init__(self)
+        self.stopped = event
+        self.eqInst = eqInst
+        #TODO: check for Pulse/Alsa somehow...
+
+    def run(self):
+        while not self.stopped.wait(2):
+            PullVolumeThread.pulseVolumeCheckTimer(self.eqInst)
+            #PullVolumeThread.alsaVolumeCheckTimer(self)
+
+    @staticmethod
+    def alsaVolumeCheckTimer( paramEQPluginInst ):
+        #alsa get volume:
+        #mainVolume = check_output(strParams )
+        p = subprocess.Popen(["amixer", "sget", " Master"], stdout=subprocess.PIPE)
+        out, err = p.communicate()
+        pattern = re.compile('(\d*)%', re.MULTILINE)
+        alsaVolume = int(pattern.findall( str(out) )[0])
+        if paramEQPluginInst.mainVolumePercentage  != alsaVolume:
+            paramEQPluginInst.mainVolumePercentage = alsaVolume
+            print("main volume changed : ", alsaVolume)
+            paramEQPluginInst.volume_changed(None, None)
+
+    @staticmethod
+    def pulseVolumeCheckTimer( paramEQPluginInst ):
+        #alsa get volume:
+        #mainVolume = check_output(strParams )
+        p = subprocess.Popen(["pactl", "list", "sinks"], stdout=subprocess.PIPE)
+        out, err = p.communicate()
+        pattern = re.compile(': 0:\s*(\d*)%', re.MULTILINE)
+        strOutPut = str(out)
+        #print( "pactl says: ", strOutPut )
+        allVolumes = pattern.findall( strOutPut )
+        #print("all volumes : ", allVolumes)
+        pulseVolume = int(allVolumes[1])
+        if paramEQPluginInst.mainVolumePercentage != pulseVolume:
+            paramEQPluginInst.mainVolumePercentage  = pulseVolume
+            print("main volume changed : ", pulseVolume)
+            paramEQPluginInst.volume_changed(None, None)
+
+
 class ParametricEQPlugin (GObject.Object, Peas.Activatable):
     object = GObject.property(type=GObject.Object)
 
@@ -63,6 +106,7 @@ class ParametricEQPlugin (GObject.Object, Peas.Activatable):
             print('filter disabled')
             shell = self.object
             self._appshell.cleanup()
+            self.stopFlag.set()
         except:
             pass
         del self.shell_player
@@ -111,39 +155,6 @@ class ParametricEQPlugin (GObject.Object, Peas.Activatable):
 
     mainVolumePercentage = 0
 
-    @staticmethod
-    def alsaVolumeCheckTimer( paramEQPluginInst ):
-        threading.Timer(2.0, ParametricEQPlugin.alsaVolumeCheckTimer, [paramEQPluginInst]).start()
-        #alsa get volume:
-        #mainVolume = check_output(strParams )
-        p = subprocess.Popen(["amixer", "sget", " Master"], stdout=subprocess.PIPE)
-        out, err = p.communicate()
-        pattern = re.compile('(\d*)%', re.MULTILINE)
-        alsaVolume = int(pattern.findall( str(out) )[0])
-        if paramEQPluginInst.mainVolumePercentage  != alsaVolume:
-            paramEQPluginInst.mainVolumePercentage = alsaVolume
-            print("main volume changed : ", alsaVolume)
-            paramEQPluginInst.volume_changed(None, None)
-
-    @staticmethod
-    def pulseVolumeCheckTimer( paramEQPluginInst ):
-        threading.Timer(2.0, ParametricEQPlugin.pulseVolumeCheckTimer, [paramEQPluginInst]).start()
-        #alsa get volume:
-        #mainVolume = check_output(strParams )
-        p = subprocess.Popen(["pactl", "list", "sinks"], stdout=subprocess.PIPE)
-        out, err = p.communicate()
-        pattern = re.compile(': 0:\s*(\d*)%', re.MULTILINE)
-        strOutPut = str(out)
-        #print( "pactl says: ", strOutPut )
-        allVolumes = pattern.findall( strOutPut )
-        #print("all volumes : ", allVolumes)
-        pulseVolume = int(allVolumes[1])
-        if paramEQPluginInst.mainVolumePercentage != pulseVolume:
-            paramEQPluginInst.mainVolumePercentage  = pulseVolume
-            print("main volume changed : ", pulseVolume)
-            paramEQPluginInst.volume_changed(None, None)
-
-
     def do_activate(self):
         self.shell = self.object
         print("is RB3 :" + str( ParametricEQ_rb3compat.is_rb3() ) + ", " + str(ParametricEQ_rb3compat.PYVER))
@@ -174,7 +185,7 @@ class ParametricEQPlugin (GObject.Object, Peas.Activatable):
         self.filterSet = False
         #add volume changed callback
         self.psc_id = self.player.connect('volume-changed', self.volume_changed)
-        ParametricEQPlugin.pulseVolumeCheckTimer(self)
-        #TODO: check for Pulse/Alsa somehow...
-        #ParametricEQPlugin.alsaVolumeCheckTimer(self)
+        self.stopFlag = threading.Event()
+        thread = PullVolumeThread(self.stopFlag, self)
+        thread.start()
         print("do_activate done")
