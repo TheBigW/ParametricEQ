@@ -67,8 +67,6 @@ class PullVolumeThread(threading.Thread):
 
     @staticmethod
     def pulseVolumeCheckTimer( paramEQPluginInst ):
-        #alsa get volume:
-        #mainVolume = check_output(strParams )
         p = subprocess.Popen(["pactl", "list", "sinks"], stdout=subprocess.PIPE)
         out, err = p.communicate()
         pattern = re.compile(': 0:\s*(\d*)%', re.MULTILINE)
@@ -76,7 +74,7 @@ class PullVolumeThread(threading.Thread):
         #print( "pactl says: ", strOutPut )
         allVolumes = pattern.findall( strOutPut )
         #print("all volumes : ", allVolumes)
-        pulseVolume = int(allVolumes[1])
+        pulseVolume = int(allVolumes[-1])
         if paramEQPluginInst.mainVolumePercentage != pulseVolume:
             paramEQPluginInst.mainVolumePercentage  = pulseVolume
             print("main volume changed : ", pulseVolume)
