@@ -20,3 +20,6 @@ If you google 'audiogram' you will find that our hearing levels are not linear: 
 Thanks to the guys of the rhythmbox IRC for their great help and the authors of the 10 band eq, which I used as a reference a lot! 
 
 for installation just copy all files to HOME/.local/share/rhythmbox/plugins/ParametricEQ
+
+on newer releases python gconf is missing. The installation of gir-gconf fixes this issue: 
+sudo apt install gir1.2-gconf-2.0
